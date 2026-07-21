@@ -1,16 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { motion } from 'framer-motion';
-import { MapPin, Calendar, Users, ChevronRight, Layers, LayoutGrid } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Calendar, Users, ChevronRight, Layers, LayoutGrid, Zap, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SportsEventBundle, { MOCK_SPORTS_EVENTS } from '../components/SportsEventBundle';
+import { useAuthStore } from '../store/authStore';
+import toast from 'react-hot-toast';
 
 export default function TournamentsPage() {
   const [viewMode, setViewMode] = useState('bundle'); // 'bundle' | 'grid'
   const [filter, setFilter] = useState('All');
   const navigate = useNavigate();
   const bundleRef = useRef(null);
+  
+  const { user, profile, registerTournament } = useAuthStore();
+  const registeredEvents = profile?.tournamentHistory || [];
 
   // Automatically focus/scroll directly to the event bundle stack when opening tournaments page
   useEffect(() => {
@@ -21,6 +26,23 @@ export default function TournamentsPage() {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  const handleGridRegister = async (t) => {
+    if (!user) {
+      toast('Please login to register for events', { icon: '🔐' });
+      navigate('/login');
+      return;
+    }
+    try {
+      await registerTournament(t);
+      toast.success(`Registered for ${t.name}! 🏆`, {
+        icon: '🎉',
+        style: { background: '#111111', color: '#B7FF2A', borderRadius: '12px' }
+      });
+    } catch (err) {
+      toast.error(err.message || 'Registration failed');
+    }
+  };
 
   const filtered = filter === 'All' ? MOCK_SPORTS_EVENTS : MOCK_SPORTS_EVENTS.filter(t => t.sport === filter);
 
@@ -111,7 +133,7 @@ export default function TournamentsPage() {
                 <SportsEventBundle />
               </motion.div>
             ) : (
-              /* STANDARD GRID VIEW */
+              /* STANDARD GRID VIEW WITH DIRECT REGISTER BUTTONS */
               <div>
                 {/* Category Filter Pills for Grid */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 8 }}>
@@ -133,44 +155,67 @@ export default function TournamentsPage() {
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
-                  {filtered.map((t, i) => (
-                    <motion.div key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-                      className="premium-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ height: 200, background: '#E8E8E8', position: 'relative' }}>
-                        <img src={t.image} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <div style={{ position: 'absolute', top: 16, right: 16, background: '#FFFFFF', padding: '4px 12px', borderRadius: 100, fontSize: 12, fontWeight: 700, color: '#111111' }}>
-                          {t.sportIcon} {t.sport}
-                        </div>
-                      </div>
-                      <div style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#22C55E' }}>{t.status}</span>
-                        </div>
-                        
-                        <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 20, fontWeight: 700, color: '#111111', marginBottom: 16, letterSpacing: '-0.01em' }}>{t.name}</h3>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Calendar size={16} /> {t.date}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><MapPin size={16} /> {t.location}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Users size={16} /> {t.registeredCount} / {t.maxTeams} Teams</div>
-                        </div>
-
-                        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, borderTop: '1px solid #E8E8E8' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <span style={{ fontSize: 12, color: '#888888', fontWeight: 500 }}>Entry Fee</span>
-                            <span style={{ fontSize: 16, fontWeight: 700, color: '#111111' }}>{t.fee}</span>
+                  {filtered.map((t, i) => {
+                    const isRegistered = registeredEvents.some(r => r.id === t.id);
+                    return (
+                      <motion.div key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                        className="premium-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ height: 200, background: '#E8E8E8', position: 'relative' }}>
+                          <img src={t.image} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <div style={{ position: 'absolute', top: 16, right: 16, background: '#FFFFFF', padding: '4px 12px', borderRadius: 100, fontSize: 12, fontWeight: 700, color: '#111111' }}>
+                            {t.sportIcon} {t.sport}
                           </div>
-                          <button 
-                            onClick={() => { setViewMode('bundle'); bundleRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
-                            className="btn-accent"
-                            style={{ padding: '8px 18px', fontSize: 13, borderRadius: 100 }}
-                          >
-                            Swipe in Bundle →
-                          </button>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                        <div style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                            <span style={{ fontSize: 13, fontWeight: 600, color: t.badgeColor || '#22C55E' }}>{t.status}</span>
+                          </div>
+                          
+                          <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 20, fontWeight: 700, color: '#111111', marginBottom: 16, letterSpacing: '-0.01em' }}>{t.name}</h3>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Calendar size={16} /> {t.date}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><MapPin size={16} /> {t.location}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Users size={16} /> {t.registeredCount} / {t.maxTeams} Teams</div>
+                          </div>
+
+                          <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, borderTop: '1px solid #E8E8E8' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ fontSize: 12, color: '#888888', fontWeight: 500 }}>Entry Fee</span>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: '#111111' }}>{t.fee}</span>
+                            </div>
+
+                            {/* CONVERTED TO DIRECT REGISTER BUTTON */}
+                            <button 
+                              onClick={() => handleGridRegister(t)}
+                              disabled={isRegistered}
+                              className={isRegistered ? "btn-secondary" : "btn-accent"}
+                              style={{ 
+                                padding: '10px 20px', 
+                                fontSize: 13, 
+                                borderRadius: 100, 
+                                fontWeight: 700,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                cursor: isRegistered ? 'default' : 'pointer'
+                              }}
+                            >
+                              {isRegistered ? (
+                                <>
+                                  <CheckCircle2 size={15} color="#22C55E" /> Registered
+                                </>
+                              ) : (
+                                <>
+                                  <Zap size={15} fill="#111111" /> Register
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
                 </div>
               </div>
             )}
