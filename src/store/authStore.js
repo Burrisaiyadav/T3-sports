@@ -59,4 +59,14 @@ export const useAuthStore = create((set, get) => ({
     localStorage.removeItem('t3_session_email')
     set({ user: null, session: null, profile: null })
   },
+
+  registerTournament: async (tournament) => {
+    const { user } = get()
+    if (!user) throw new Error('Please login to register for events')
+    const updatedUser = db.registerTournament(user.email, tournament)
+    if (updatedUser) {
+      set({ user: updatedUser, profile: updatedUser.profile })
+    }
+    return updatedUser
+  },
 }))

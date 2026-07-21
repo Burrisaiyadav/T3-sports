@@ -124,5 +124,38 @@ export const db = {
       if (notif) notif.read = true
     }
     saveDB(database)
+  },
+
+  // --- TOURNAMENT REGISTRATIONS ---
+  registerTournament: (email, tournament) => {
+    const database = getDB()
+    if (!database.users[email]) return null
+    
+    if (!database.users[email].profile.tournamentHistory) {
+      database.users[email].profile.tournamentHistory = []
+    }
+    
+    const exists = database.users[email].profile.tournamentHistory.some(t => t.id === tournament.id)
+    if (!exists) {
+      database.users[email].profile.tournamentHistory.unshift({
+        ...tournament,
+        registeredAt: new Date().toISOString(),
+        status: 'Registered'
+      })
+      
+      // Add notification
+      if (!database.notifications[email]) database.notifications[email] = []
+      database.notifications[email].unshift({
+        id: 'notif_' + Date.now(),
+        title: `Registered for ${tournament.name}! 🏆`,
+        msg: `Your spot in ${tournament.sport} (${tournament.location}) is confirmed.`,
+        time: 'Just now',
+        read: false,
+        type: 'tournament'
+      })
+
+      saveDB(database)
+    }
+    return database.users[email]
   }
 }

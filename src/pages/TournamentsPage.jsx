@@ -1,90 +1,179 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { motion } from 'framer-motion';
-import { MapPin, Calendar, Users, Filter, ChevronRight } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-
-const MOCK_TOURNAMENTS = [
-  { id: 1, name: 'T3 Summer Cup 2024', sport: 'Football', date: 'Aug 15 - 20, 2024', location: 'Mumbai Arena', teams: 16, status: 'Registration Open', fee: '₹5,000/team', image: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=600&auto=format&fit=crop' }
-];
+import { MapPin, Calendar, Users, ChevronRight, Layers, LayoutGrid } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import SportsEventBundle, { MOCK_SPORTS_EVENTS } from '../components/SportsEventBundle';
 
 export default function TournamentsPage() {
+  const [viewMode, setViewMode] = useState('bundle'); // 'bundle' | 'grid'
   const [filter, setFilter] = useState('All');
   const navigate = useNavigate();
+  const bundleRef = useRef(null);
 
-  const filtered = filter === 'All' ? MOCK_TOURNAMENTS : MOCK_TOURNAMENTS.filter(t => t.sport === filter);
+  // Automatically focus/scroll directly to the event bundle stack when opening tournaments page
+  useEffect(() => {
+    if (bundleRef.current) {
+      const timer = setTimeout(() => {
+        bundleRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
+  const filtered = filter === 'All' ? MOCK_SPORTS_EVENTS : MOCK_SPORTS_EVENTS.filter(t => t.sport === filter);
 
   return (
     <div style={{ minHeight: '100vh', background: '#F6F6F6', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
       
-      <main style={{ flex: 1, paddingTop: 120, paddingBottom: 80 }}>
-        <div className="container-wide" style={{ padding: '0 24px' }}>
+      <main style={{ flex: 1, paddingTop: 90, paddingBottom: 80 }}>
+        <div className="container-wide" style={{ padding: '0 20px' }}>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 48 }}>
-            <h1 style={{ fontFamily: 'Space Grotesk', fontSize: 'clamp(32px, 4vw, 48px)', fontWeight: 700, color: '#111111', letterSpacing: '-0.02em' }}>
-              Explore Tournaments
-            </h1>
-            <p style={{ color: '#555555', fontSize: 18, maxWidth: 600 }}>
-              Discover local and national tournaments, register your team, and compete against the best.
-            </p>
-          </div>
+          {/* Header section with View Toggle */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 20, marginBottom: 28 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ background: '#B7FF2A', color: '#111111', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 100 }}>
+                  EXPLORE EVENTS
+                </span>
+              </div>
+              <h1 style={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: 'clamp(28px, 4.5vw, 42px)', fontWeight: 700, color: '#111111', letterSpacing: '-0.02em', marginBottom: 6 }}>
+                Explore Sports & Tournaments
+              </h1>
+              <p style={{ color: '#555555', fontSize: 15, maxWidth: 580, lineHeight: 1.5 }}>
+                Swipe through tournament bundles like a dating app to quickly register for events across India!
+              </p>
+            </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 8 }}>
-            {['All', 'Football', 'Basketball', 'Cricket', 'Volleyball'].map(f => (
-              <button 
-                key={f} 
-                onClick={() => setFilter(f)}
+            {/* View Mode Toggle: Swipe Bundle vs Grid */}
+            <div style={{ background: '#FFFFFF', padding: 5, borderRadius: 100, border: '1px solid #E8E8E8', display: 'inline-flex', gap: 6, boxShadow: '0 4px 12px rgba(0,0,0,0.04)' }}>
+              <button
+                onClick={() => setViewMode('bundle')}
                 style={{
-                  background: filter === f ? '#111111' : '#FFFFFF',
-                  color: filter === f ? '#FFFFFF' : '#111111',
-                  border: filter === f ? '1px solid #111111' : '1px solid #E8E8E8',
-                  padding: '8px 20px', borderRadius: 100, fontSize: 14, fontWeight: 600, cursor: 'pointer',
-                  whiteSpace: 'nowrap', transition: 'all 0.2s'
+                  background: viewMode === 'bundle' ? '#111111' : 'transparent',
+                  color: viewMode === 'bundle' ? '#FFFFFF' : '#555555',
+                  border: 'none',
+                  padding: '8px 18px',
+                  borderRadius: 100,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  transition: 'all 0.2s'
                 }}
               >
-                {f}
+                <Layers size={16} color={viewMode === 'bundle' ? '#B7FF2A' : '#555555'} /> Swipe Bundle
               </button>
-            ))}
+
+              <button
+                onClick={() => setViewMode('grid')}
+                style={{
+                  background: viewMode === 'grid' ? '#111111' : 'transparent',
+                  color: viewMode === 'grid' ? '#FFFFFF' : '#555555',
+                  border: 'none',
+                  padding: '8px 18px',
+                  borderRadius: 100,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <LayoutGrid size={16} /> Grid View
+              </button>
+            </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
-            {filtered.map((t, i) => (
-              <motion.div key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} onClick={() => navigate(`/tournaments/${t.id}`)}
-                className="premium-card" style={{ display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
-                <div style={{ height: 200, background: '#E8E8E8', position: 'relative' }}>
-                  <img src={t.image} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', top: 16, right: 16, background: '#FFFFFF', padding: '4px 12px', borderRadius: 100, fontSize: 12, fontWeight: 700, color: '#111111' }}>
-                    {t.sport}
-                  </div>
-                </div>
-                <div style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                    <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: t.status === 'Ongoing' ? '#EF4444' : t.status === 'Registration Open' ? '#22C55E' : '#B7FF2A' }} />
-                    <span style={{ fontSize: 13, fontWeight: 600, color: t.status === 'Ongoing' ? '#EF4444' : '#111111' }}>{t.status}</span>
-                  </div>
-                  
-                  <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 20, fontWeight: 700, color: '#111111', marginBottom: 16, letterSpacing: '-0.01em' }}>{t.name}</h3>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Calendar size={16} /> {t.date}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><MapPin size={16} /> {t.location}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Users size={16} /> {t.teams} Teams</div>
-                  </div>
-
-                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, borderTop: '1px solid #E8E8E8' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: 12, color: '#888888', fontWeight: 500 }}>Entry Fee</span>
-                      <span style={{ fontSize: 16, fontWeight: 700, color: '#111111' }}>{t.fee}</span>
-                    </div>
-                    <button style={{ background: '#111111', color: '#FFFFFF', border: 'none', width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-                </div>
+          {/* VIEW CONTENT TARGET REF FOR AUTO SCROLL DIRECTLY TO BUNDLE */}
+          <div ref={bundleRef} style={{ scrollMarginTop: 90 }}>
+            {viewMode === 'bundle' ? (
+              /* DATING APP STYLE BUNDLE STACK SECTION */
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  background: '#FFFFFF',
+                  borderRadius: 28,
+                  border: '1px solid #E8E8E8',
+                  padding: '28px 16px',
+                  maxWidth: 560,
+                  margin: '0 auto',
+                  boxShadow: '0 12px 36px rgba(0,0,0,0.05)'
+                }}
+              >
+                <SportsEventBundle />
               </motion.div>
-            ))}
+            ) : (
+              /* STANDARD GRID VIEW */
+              <div>
+                {/* Category Filter Pills for Grid */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 32, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 8 }}>
+                  {['All', 'Cricket', 'Football', 'Basketball', 'Tennis', 'Badminton', 'Volleyball', 'Esports', 'Athletics'].map(f => (
+                    <button 
+                      key={f} 
+                      onClick={() => setFilter(f)}
+                      style={{
+                        background: filter === f ? '#111111' : '#FFFFFF',
+                        color: filter === f ? '#FFFFFF' : '#111111',
+                        border: filter === f ? '1px solid #111111' : '1px solid #E8E8E8',
+                        padding: '8px 20px', borderRadius: 100, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                        whiteSpace: 'nowrap', transition: 'all 0.2s'
+                      }}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
+                  {filtered.map((t, i) => (
+                    <motion.div key={t.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                      className="premium-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ height: 200, background: '#E8E8E8', position: 'relative' }}>
+                        <img src={t.image} alt={t.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <div style={{ position: 'absolute', top: 16, right: 16, background: '#FFFFFF', padding: '4px 12px', borderRadius: 100, fontSize: 12, fontWeight: 700, color: '#111111' }}>
+                          {t.sportIcon} {t.sport}
+                        </div>
+                      </div>
+                      <div style={{ padding: 24, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: '#22C55E' }}>{t.status}</span>
+                        </div>
+                        
+                        <h3 style={{ fontFamily: 'Space Grotesk', fontSize: 20, fontWeight: 700, color: '#111111', marginBottom: 16, letterSpacing: '-0.01em' }}>{t.name}</h3>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Calendar size={16} /> {t.date}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><MapPin size={16} /> {t.location}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#555555', fontSize: 14 }}><Users size={16} /> {t.registeredCount} / {t.maxTeams} Teams</div>
+                        </div>
+
+                        <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 20, borderTop: '1px solid #E8E8E8' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontSize: 12, color: '#888888', fontWeight: 500 }}>Entry Fee</span>
+                            <span style={{ fontSize: 16, fontWeight: 700, color: '#111111' }}>{t.fee}</span>
+                          </div>
+                          <button 
+                            onClick={() => { setViewMode('bundle'); bundleRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                            className="btn-accent"
+                            style={{ padding: '8px 18px', fontSize: 13, borderRadius: 100 }}
+                          >
+                            Swipe in Bundle →
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
         </div>

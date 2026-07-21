@@ -73,7 +73,7 @@ export default function DashboardOverview() {
           </div>
         </Link>
 
-        <Link to="/tournaments" style={{ textDecoration: 'none' }}>
+        <Link to="/dashboard/tournaments" style={{ textDecoration: 'none' }}>
           <div className="premium-card" style={{ padding: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ width: 48, height: 48, background: '#F6F6F6', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#111111' }}>
@@ -81,7 +81,7 @@ export default function DashboardOverview() {
               </div>
               <div>
                 <p style={{ color: '#111111', fontWeight: 600, fontSize: 15 }}>Tournaments</p>
-                <p style={{ color: '#888888', fontSize: 13 }}>Find events</p>
+                <p style={{ color: '#888888', fontSize: 13 }}>Explore & Swipe</p>
               </div>
             </div>
             <ArrowRight size={20} color="#888888" />
